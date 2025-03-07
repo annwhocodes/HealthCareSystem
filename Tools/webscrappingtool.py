@@ -1,13 +1,17 @@
 # Import necessary libraries
-from google import genai
+import google.generativeai as genai
 from duckduckgo_search import DDGS
 from bs4 import BeautifulSoup
 import requests
 import os
 from dotenv import load_dotenv
-load_dotenv()
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+# Load environment variables
+load_dotenv()
+
+# Initialize Google Gemini client
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
 
 ALLOWED_SITES = [
     "medlineplus.gov", "mayoclinic.org", "fda.gov", "drugs.com", "webmd.com",
@@ -17,12 +21,11 @@ ALLOWED_SITES = [
 # Function to query Gemini's LLM
 def query_gemini(question):
     try:
-        # Send the question to Gemini's LLM
-        response = client.models.generate_content(
-            model="gemini-2.0-flash", contents=question
-        )
+        # Initialize the Gemini model
+        model = genai.GenerativeModel("gemini-1.5-flash-latest")  # Use "gemini-pro" or the correct model name
+        response = model.generate_content(question)
         
-        if response.text:
+        if response and response.text:
             return response.text  # Return answer if found
         else:
             return None  # No answer found, trigger scraping
@@ -32,8 +35,9 @@ def query_gemini(question):
 
 # Function to search using DuckDuckGo
 def search_duckduckgo(query):
-    results = DDGS(query)
-    links = [result['href'] for result in results]
+    with DDGS() as ddgs:
+        results = ddgs.text(query, max_results=5)
+        links = [result['href'] for result in results]
     return links
 
 # Function to scrape websites from allowed sites list
@@ -73,4 +77,4 @@ def ai_agent(question):
 if __name__ == "__main__":
     question = input("Please enter your question: ")  # Taking input from the user
     answer = ai_agent(question)  
-    print(f"Answer: {answer}")  
+    print(f"Answer: {answer}")

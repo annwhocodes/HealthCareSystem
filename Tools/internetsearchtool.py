@@ -1,73 +1,34 @@
 import requests
-from bs4 import BeautifulSoup
-from google import genai
-from duckduckgo_search import DDGS
 import os
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
-# Initialize Gemini API client
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+# Google Custom Search API credentials
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_CSE_ID = os.getenv("GOOGLE_SE_ID")
 
-# List of medical websites to search
-SITES = [
-    "https://medlineplus.gov",
-    "https://www.mayoclinic.org",
-    "https://www.fda.gov",
-    "https://www.drugs.com",
-    "https://www.webmd.com",
-    "https://www.who.int",
-    "https://www.ema.europa.eu",
-    "https://www.nih.gov"
-]
+# Function to search using Google Custom Search API
+def search_google(query):
+    try:
+        url = f"https://www.googleapis.com/customsearch/v1?q={query}&key={GOOGLE_API_KEY}&cx={GOOGLE_CSE_ID}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            results = response.json().get("items", [])
+            links = [result["link"] for result in results]
+            return links
+        else:
+            print(f"Error searching Google: {response.status_code} - {response.text}")
+            return []
+    except Exception as e:
+        print(f"Error searching Google: {e}")
+        return []
 
-def search_articles(query):
-    search_results = []
-    with DDGS() as ddgs:
-        for site in SITES:
-            results = ddgs.text(f"site:{site} {query}", max_results=5)
-            search_results.extend([result["href"] for result in results])
-    return search_results
-
-def filter_and_summarize_articles(articles):
-    prompt = f"Filter and summarize the top three most reliable medical articles from this list, and provide a 5-line summary with their URLs:\n{articles}"
-    response = client.models.generate_content(
-        model="gemini-2.0-flash", contents=prompt
-    )
-    return response.text
-
-def find_medicine_images(medicine_name):
-    with DDGS() as ddgs:
-        results = list(ddgs.images(medicine_name, max_results=1))
-    return [results[0]["image"]] if results else []
-
-def find_purchase_links(medicine_name):
-    purchase_links = []
-    with DDGS() as ddgs:
-        results = ddgs.text(f"buy {medicine_name}", max_results=3)
-        purchase_links = [result["href"] for result in results]
-    return purchase_links
-
+# Example usage
 if __name__ == "__main__":
-    query = input("Enter medical query: ")
-    articles = search_articles(query)
-    filtered_summary = filter_and_summarize_articles(articles)
-    print("\n=========================")
-    print(" Top 3 Articles with Summaries ")
-    print("=========================")
-    print(filtered_summary)
-    
-    medicine_name = input("\nEnter medicine name: ")
-    image = find_medicine_images(medicine_name)
-    purchase_links = find_purchase_links(medicine_name)
-    print("\n=========================")
-    print(" Medicine Image ")
-    print("=========================")
-    print(image[0] if image else "No image found.")
-    
-    print("\n=========================")
-    print(" Purchase Links ")
-    print("=========================")
-    for link in purchase_links:
+    query = input("Enter your query: ")
+    links = search_google(query)
+    print("Search Results:")
+    for link in links:
         print(link)

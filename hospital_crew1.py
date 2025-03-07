@@ -1,11 +1,11 @@
 from crewai import Agent, Task, Crew
-from crewai.tools import PythonREPLTool  # Import Python REPL tool
-from diagnostic_tools import faiss_tool, medical_search_tool  # Import your tools
+from Tools.repl_tool import PythonREPLTool  # Import Python REPL tool
+from Tools.visualiser_tool import VisualiserTool  # Import Visualiser tool
+from Tools.csv_reader_tool import CSVReaderTool  # Import CSV Reader tool
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 import pandas as pd
-import matplotlib.pyplot as plt
 
 # Load environment variables
 load_dotenv()
@@ -14,9 +14,9 @@ load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)
 
-# Custom LLM wrapper for Gemini (Not required)
+# Custom LLM wrapper for Gemini
 class GeminiLLM:
-    def __init__(self, model_name="gemini-pro"):
+    def __init__(self, model_name="gemini-1.5-flash-latest"):
         self.model = genai.GenerativeModel(model_name)
 
     def invoke(self, prompt, config=None, **kwargs):
@@ -38,7 +38,7 @@ master_agent = Agent(
     role="Master Agent",
     goal="Assign tasks to other agents and retrieve information for the user.",
     backstory="You are the central orchestrator of the MediMind system, ensuring smooth coordination between agents.",
-    llm=GeminiLLM(model_name="gemini-pro"),  # Use Gemini as the LLM
+    llm=GeminiLLM(model_name="gemini-1.5-flash-latest"),  # Use Gemini as the LLM
     verbose=True,
     allow_delegation=True
 )
@@ -48,8 +48,8 @@ diagnostics_agent = Agent(
     role="Diagnostics Agent",
     goal="Provide preliminary diagnoses based on medical PDFs.",
     backstory="You are an AI trained to extract medical insights from PDFs using Retrieval-Augmented Generation (RAG).",
-    tools=[faiss_tool, medical_search_tool],  # Use the FAISS query tool and medical web search tool
-    llm=GeminiLLM(model_name="gemini-pro"),  # Use Gemini as the LLM
+    tools=[CSVReaderTool()],  # Use the CSV Reader tool
+    llm=GeminiLLM(model_name="gemini-1.5-flash-latest"),  # Use Gemini as the LLM
     verbose=True
 )
 
@@ -58,8 +58,8 @@ search_agent = Agent(
     role="Search Agent",
     goal="Retrieve additional medical information from trusted online sources.",
     backstory="You are an AI specialized in searching the internet for reliable medical data.",
-    tools=[medical_search_tool],  # Use the medical web search tool
-    llm=GeminiLLM(model_name="gemini-pro"),  # Use Gemini as the LLM
+    tools=[CSVReaderTool()],  # Use the CSV Reader tool
+    llm=GeminiLLM(model_name="gemini-1.5-flash-latest"),  # Use Gemini as the LLM
     verbose=True
 )
 
@@ -68,8 +68,8 @@ hospital_management_agent = Agent(
     role="Hospital Management Agent",
     goal="Manage patient records and hospital data, and visualize insights.",
     backstory="You are an AI specialized in processing and visualizing hospital data.",
-    tools=[PythonREPLTool()],  # Add Python REPL tool for data processing and visualization
-    llm=GeminiLLM(model_name="gemini-pro"),  # Use Gemini as the LLM
+    tools=[PythonREPLTool(), VisualiserTool()],  # Add Python REPL tool and Visualiser tool for data processing and visualization
+    llm=GeminiLLM(model_name="gemini-1.5-flash-latest"),  # Use Gemini as the LLM
     verbose=True
 )
 
@@ -90,10 +90,10 @@ search_task = Task(
 
 # Task 3: Manage Hospital Data
 manage_hospital_data_task = Task(
-    description="Manage patient records and hospital data, and generate visualizations. Path of the CSV is as follows: {excel_path}. Write a code to answer the user's question by writing Python code using the pandas library and the column names. User's question is as follows: {user_query}.",
+    description="Manage patient records and hospital data, and generate visualizations. Path of the CSV is as follows: {csv_path}. Write a code to answer the user's question by writing Python code using the pandas library and the column names. User's question is as follows: {user_query}.",
     agent=hospital_management_agent,
     expected_output="Insights and visualizations from hospital operations data.",
-    tools=[PythonREPLTool()]  # Use Python REPL tool for this task
+    tools=[PythonREPLTool(), VisualiserTool()]  # Use Python REPL tool and Visualiser tool for this task
 )
 
 # Define the Crew
@@ -107,8 +107,8 @@ crew = Crew(
 if __name__ == "__main__":
     user_query = "What is the average age of patients in the dataset?"
     pdf_path = r"C:\Users\Ananya\Desktop\Hackathon_Project\Data\Sample_Patient_Report.pdf"  # Use raw string for file path
-    excel_path = r"C:\Users\Ananya\Desktop\Hackathon_Project\Data\Hospital_Data.xlsx"  # Use raw string for file path
+    csv_path = r"C:\Users\Ananya\Desktop\Hackathon_Project\Data\hospital_records_2021_2024_with_bills.csv"  # Use raw string for file path
 
     # Run the workflow
-    result = crew.kickoff(inputs={"user_query": user_query, "pdf_path": pdf_path, "excel_path": excel_path})
+    result = crew.kickoff(inputs={"user_query": user_query, "pdf_path": pdf_path, "csv_path": csv_path})
     print(f"Final Result:\n{result}")

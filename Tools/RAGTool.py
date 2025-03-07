@@ -1,5 +1,5 @@
 import pandas as pd
-from langchain.embeddings import HuggingFaceEmbeddings  # Use Hugging Face embeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings # Use Hugging Face embeddings
 ##Pip install langchain_google_genai
 ##from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.vectorstores import FAISS
