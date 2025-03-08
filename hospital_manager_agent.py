@@ -74,14 +74,13 @@ result = crew.kickoff(inputs={"data_path": "C://Users//Ananya//Desktop//Hackatho
 print(result)
 
 # Example usage to add a patient record
-new_record = {
-    "Patient ID": 12345,
-    "Name": "John Doe",
-    "Gender": "Male",
-    "Medical Condition": "Flu",
-    "Treatments": "Medication",
-    "Admit Date": "2024-01-01",
-    "Discharge Date": "2024-01-05",
-    "Bill Amount": 500.00
-}
+new_record = ["65f49173",
+    "John Doe",
+    "Male",
+    "Flu",
+    "Medication",
+    "2024-01-01",
+    "2024-01-05",
+    500.00
+]
 add_result = patient_record_manager_tool.execute(new_record)  # filepath: c:\Users\Ananya\Desktop\Hackathon_Project\hospital_manager_agent.py

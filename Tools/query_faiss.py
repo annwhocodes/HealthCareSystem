@@ -7,7 +7,7 @@ huggingface_embeddings = HuggingFaceEmbeddings(model_name=model_name)
 
 # Load FAISS Index with Hugging Face Embeddings
 vector_store = FAISS.load_local(
-    "faiss_index",  # Path to the FAISS index
+    "C:\\Users\\Ananya\\Desktop\\Hackathon_Project\\faiss_index",  # Path to the FAISS index
     embeddings=huggingface_embeddings,
     allow_dangerous_deserialization=True  # Allow loading of pickle files
 )

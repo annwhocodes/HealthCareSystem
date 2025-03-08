@@ -1,10 +1,10 @@
-import Tools.webscrappingtool
-import Tools.internetsearchtool
+from Tools import webscrappingtool
+from Tools import internetsearchtool
 
 class SearchAgent:
     def __init__(self):
         self.web_scraper = webscrappingtool.WebScraper()
-        self.internet_searcher = internetsearchtool.InternetSearcher()
+        self.internet_searcher = internetsearchtool.InternetSearcher() # Use the module directly
 
     def get_medical_information(self, query):
         """
@@ -16,7 +16,8 @@ class SearchAgent:
         """
         Fetches purchase options using the internet search tool.
         """
-        return self.internet_searcher.search_purchase_options(medicine_name)
+        query = f"buy {medicine_name}"
+        return self.internet_searcher.search_google(query)  # Call the search_google function
 
     def process_query(self, user_query):
         """

@@ -1,10 +1,13 @@
 from langchain.agents import initialize_agent, Tool
-from diagnostic_tools import faiss_tool, medical_search_tool  # Import your tools
+from langchain_core.runnables import Runnable
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-from langchain_core.runnables import Runnable
 from google.generativeai import GenerativeModel
+
+# Import tools from the Tools folder
+from Tools.query_faiss import query_faiss  # Replace with actual import
+from Tools.medical_search_tool import medical_search_tool  # Replace with actual import
 
 # Load environment variables
 load_dotenv()
@@ -37,8 +40,19 @@ genai.configure(api_key=GEMINI_API_KEY)
 # Initialize the LLM
 llm = GeminiLLM(model_name="gemini-1.5-flash-latest")  # Use Gemini as the LLM
 
-# Define the tools
-tools = [faiss_tool, medical_search_tool]
+# Wrap the imported functions as LangChain tools
+tools = [
+    Tool(
+        name="query_faiss",
+        func=query_faiss,  # Use the imported query_faiss function
+        description="Useful for querying a FAISS vector database for medical information."
+    ),
+    Tool(
+        name="medical_search_tool",
+        func=medical_search_tool,  # Use the imported medical_search_tool function
+        description="Useful for searching medical information from trusted sources."
+    )
+]
 
 # Initialize the Diagnostics Agent
 diagnostics_agent = initialize_agent(
