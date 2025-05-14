@@ -3,8 +3,8 @@ from PIL import Image
 import google.generativeai as genai
 from navbar import navbar
 from footer import footer
-from internetsearchtool import InternetSearcher
-from search_agent import SearchAgent  # Import the SearchAgent class
+# from internetsearchtool import InternetSearcher
+# from search_agent import SearchAgent  # Import the SearchAgent class
 from webscrappingtool import WebScraper  # Import the WebScraper class
 
 # Import custom styles
@@ -281,8 +281,14 @@ def main():
             "What vaccines do I need this year?"
         ]
         
-        for example in examples:
-            st.markdown(f'<div class="example-query" onclick="document.getElementById(\'chat-input\').value=\'{example}\'">{example}</div>', unsafe_allow_html=True)
+        for i, example in enumerate(examples):
+            if st.button(example, key=f"example_{i}"):
+        # Add user message
+                st.session_state.chat_history.append({"role": "user", "content": example})
+                with st.spinner("Processing your question..."):
+                    response, success = get_chat_response(example)
+                st.session_state.chat_history.append({"role": "assistant", "content": response})
+                st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Display chat history
