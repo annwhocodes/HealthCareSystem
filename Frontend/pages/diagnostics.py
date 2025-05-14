@@ -7,6 +7,12 @@ import PyPDF2  # For PDF text extraction
 import os
 import sys
 
+st.set_page_config(
+    page_title="MediMind AI | Healthcare Assistant",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 # Add the directory containing the tools to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
