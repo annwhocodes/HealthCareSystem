@@ -5,7 +5,7 @@ from langchain.chains import RetrievalQA
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
-from utils.pdf_reader import extract_text_from_pdf
+from Frontend.PDFSearchTool import PDFSearchTool
 
 load_dotenv()
 

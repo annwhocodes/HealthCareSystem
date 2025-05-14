@@ -1,14 +1,35 @@
 import pandas as pd
-from langchain_community.embeddings import HuggingFaceEmbeddings # Use Hugging Face embeddings
-##Pip install langchain_google_genai
-##from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings  # Use Hugging Face embeddings
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
+from langchain.llms.base import LLM
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+class GeminiLLM(LLM):
+    def __init__(self, model_name="gemini-1.5-flash-latest"):
+        self.model_name = model_name
+
+    def _call(self, prompt, stop=None):
+        """Invoke the Gemini model to generate a response."""
+        if isinstance(prompt, (list, tuple)):
+            prompt = " ".join([str(p) for p in prompt])
+        elif not isinstance(prompt, str):
+            prompt = str(prompt)
+
+        response = genai.generate_content(model=self.model_name, contents=prompt)
+        return response[0]['text'] if response else ""
+
+    @property
+    def _identifying_params(self):
+        return {"model_name": self.model_name}
+
+    @property
+    def _llm_type(self):
+        return "gemini"
 
 class RAGTool:
     def __init__(self, csv_path, embedding_model="sentence-transformers/all-MiniLM-L6-v2", gemini_api_key=None):
@@ -42,7 +63,8 @@ class RAGTool:
     def _setup_rag_pipeline(self):
         """Set up the RAG pipeline with Gemini."""
         # Initialize Gemini LLM
-        gemini_llm = GeminiLLM(api_key=self.gemini_api_key)
+        genai.configure(api_key=self.gemini_api_key)
+        gemini_llm = GeminiLLM()
 
         # Load CSV data and create vector store
         texts = self._load_csv()

@@ -1,5 +1,5 @@
-from Tools import webscrappingtool
-from Tools import internetsearchtool
+import webscrappingtool
+import internetsearchtool
 
 class SearchAgent:
     def __init__(self):

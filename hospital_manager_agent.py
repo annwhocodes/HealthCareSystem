@@ -1,7 +1,7 @@
 from crewai import Agent, Task, Crew
-from Tools.repl_tool import PythonREPLTool, BaseTool  # Import the custom tool and BaseTool
-from Tools.csv_reader_tool import CSVReaderTool  # Import the CSVReaderTool
-from Tools.visualiser_tool import VisualiserTool  # Import the VisualiserTool
+from Frontend.repl_tool import PythonREPLTool, BaseTool  # Import the custom tool and BaseTool
+from Frontend.csv_reader_tool import CSVReaderTool  # Import the CSVReaderTool
+from Frontend.visualiser_tool import VisualiserTool  # Import the VisualiserTool
 import pandas as pd
 
 # Check if the import is successful
@@ -73,14 +73,14 @@ crew = Crew(
 result = crew.kickoff(inputs={"data_path": "C://Users//Ananya//Desktop//Hackathon_Project//Data//hospital_records_2021_2024_with_bills.csv"})
 print(result)
 
-# Example usage to add a patient record
-new_record = ["65f49173",
-    "John Doe",
-    "Male",
-    "Flu",
-    "Medication",
-    "2024-01-01",
-    "2024-01-05",
-    500.00
-]
-add_result = patient_record_manager_tool.execute(new_record)  # filepath: c:\Users\Ananya\Desktop\Hackathon_Project\hospital_manager_agent.py
+# # Example usage to add a patient record
+# new_record = ["65f49173",
+#     "John Doe",
+#     "Male",
+#     "Flu",
+#     "Medication",
+#     "2024-01-01",
+#     "2024-01-05",
+#     500.00
+# ]
+# add_result = patient_record_manager_tool.execute(new_record)  # filepath: c:\Users\Ananya\Desktop\Hackathon_Project\hospital_manager_agent.py

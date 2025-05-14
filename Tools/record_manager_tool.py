@@ -1,6 +1,6 @@
 # Tools/patient_record_manager_tool.py
 import pandas as pd
-from Tools.base_tool import BaseTool  # Import the BaseTool class
+from base_tool import BaseTool  # Import the BaseTool class
 
 class PatientRecordManagerTool(BaseTool):
     def __init__(self, csv_path: str):

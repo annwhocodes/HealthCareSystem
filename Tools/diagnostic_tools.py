@@ -1,5 +1,5 @@
 from langchain.tools import Tool
-from Tools.query_faiss import query_vector_store
+from Frontend.query_faiss import query_vector_store
 from duckduckgo_search import DDGS  # Ensure this import is correct
 from bs4 import BeautifulSoup
 import requests

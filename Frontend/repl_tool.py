@@ -1,6 +1,5 @@
 import subprocess
 
-# Define the base Tool class
 class BaseTool:
     def __init__(self, name, description):
         self.name = name
@@ -9,7 +8,6 @@ class BaseTool:
     def execute(self, *args, **kwargs):
         raise NotImplementedError("Subclasses must implement the execute method.")
 
-# Define the PythonREPLTool
 class PythonREPLTool(BaseTool):
     def __init__(self):
         super().__init__(

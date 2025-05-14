@@ -1,4 +1,4 @@
-from langchain.agents import initialize_agent, Tool
+from crewai import Agent, Tool
 from langchain_core.runnables import Runnable
 import google.generativeai as genai
 import os
@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 from google.generativeai import GenerativeModel
 
 # Import tools from the Tools folder
-from Tools.query_faiss import query_faiss  # Replace with actual import
-from Tools.medical_search_tool import medical_search_tool  # Replace with actual import
+from Frontend.query_faiss import query_faiss  # Replace with actual import
+from Frontend.medical_search_tool import medical_search_tool  # Replace with actual import
 
 # Load environment variables
 load_dotenv()
@@ -40,7 +40,7 @@ genai.configure(api_key=GEMINI_API_KEY)
 # Initialize the LLM
 llm = GeminiLLM(model_name="gemini-1.5-flash-latest")  # Use Gemini as the LLM
 
-# Wrap the imported functions as LangChain tools
+# Wrap the imported functions as CrewAI tools
 tools = [
     Tool(
         name="query_faiss",
@@ -54,17 +54,20 @@ tools = [
     )
 ]
 
-# Initialize the Diagnostics Agent
-diagnostics_agent = initialize_agent(
-    tools=tools,
-    llm=llm,
-    agent="zero-shot-react-description",  # Use a simple agent type
+# Initialize the Diagnostics Agent for CrewAI
+diagnostics_agent = Agent(
+    role="Diagnostics Agent",
+    goal="Provide preliminary diagnoses based on medical PDFs.",
+    backstory="You are an AI trained to extract medical insights from PDFs using Retrieval-Augmented Generation (RAG).",
+    tools=tools,  # Use the tools defined above
+    llm=llm,  # Use the Gemini LLM
     verbose=True  # Print detailed logs
 )
 
 # Function to handle user queries
 def handle_query(query):
-    response = diagnostics_agent.run(query)
+    # Use the Diagnostics Agent to process the query
+    response = diagnostics_agent.process(query)
     return response
 
 # Example usage

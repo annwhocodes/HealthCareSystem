@@ -45,3 +45,9 @@ medical_search_tool = Tool(
     description="Searches trusted medical websites (NIH, Mayo Clinic, WebMD, etc.) for drug and medical information.",
     func=medical_web_search
 )
+
+# Example usage
+if __name__ == "__main__":
+    query = "calpol"
+    result = medical_search_tool.func(query)
+    print(result)

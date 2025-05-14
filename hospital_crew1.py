@@ -1,114 +1,145 @@
-from crewai import Agent, Task, Crew
-from Tools.repl_tool import PythonREPLTool  # Import Python REPL tool
-from Tools.visualiser_tool import VisualiserTool  # Import Visualiser tool
-from Tools.csv_reader_tool import CSVReaderTool  # Import CSV Reader tool
-import google.generativeai as genai
-import os
-from dotenv import load_dotenv
-import pandas as pd
+from crewai import Agent, Task, Crew, tools
+from Frontend.repl_tool import PythonREPLTool  # Import your custom tool
+from RAGTool1 import RAGTool  # Import your custom tool
+from Frontend.webscrappingtool import WebScraper 
+from Frontend.PDFSearchTool import PDFSearchTool 
+from langchain_community.vectorstores import FAISS
+import streamlit as st
+from hospital_crew import initialize_crew
 
-# Load environment variables
-load_dotenv()
+# Initialize the crew and store it in session state
+if "hospital_crew" not in st.session_state:
+    st.session_state.hospital_crew = initialize_crew()
 
-# Initialize Google Gemini
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
+# Redirect to the home page
+st.switch_page("pages/home.py")
+# Define Custom Tools
+class RAGFrameworkTool:
+    def __init__(self):
+        self.name = "RAGtool"
+        self.description = "A tool to retrieve information using the RAG framework."
 
-# Custom LLM wrapper for Gemini
-class GeminiLLM:
-    def __init__(self, model_name="gemini-1.5-flash-latest"):
-        self.model = genai.GenerativeModel(model_name)
+    def _run(self, query: str) -> str:
+        """Retrieve information using the RAG framework."""
+        # Add your RAG logic here
+        return f"Retrieved information for: {query}"
 
-    def invoke(self, prompt, config=None, **kwargs):
-        """Invoke the Gemini model to generate a response."""
-        if isinstance(prompt, (list, tuple)):
-            prompt = " ".join([str(p) for p in prompt])
-        elif not isinstance(prompt, str):
-            prompt = str(prompt)
+class WebScrapingTool:
+    def __init__(self):
+        self.name = "webscrappingtool"
+        self.description = "A tool to scrape data from reliable medical websites."
 
-        response = self.model.generate_content(prompt)
-        return response.text
+    def _run(self, query: str) -> str:
+        """Scrape data from websites."""
+        # Add your web scraping logic here
+        return f"Scraped data for: {query}"
 
-    def __call__(self, prompt):
-        """Alias for invoke to maintain backward compatibility."""
-        return self.invoke(prompt)
+class InternetSearchTool:
+    def __init__(self):
+        self.name = "internetsearchtool"
+        self.description = "A tool to search the internet for medical information."
 
-# Master Agent
+    def _run(self, query: str) -> str:
+        """Search the internet for information."""
+        # Add your internet search logic here
+        return f"Searched the internet for: {query}"
+
+# Wrap the tools in Tool objects
+rag_framework_tool = tools(
+    name="rag_framework_tool",
+    func=RAGTool()._run,
+    description="A tool to retrieve information using the RAG framework."
+)
+
+web_scraping_tool = tools(
+    name="web_scraping_tool",
+    func=WebScraper()._run,
+    description="A tool to scrape data from reliable medical websites."
+)
+
+internet_search_tool = tools(
+    name="internet_search_tool",
+    func=InternetSearchTool()._run,
+    description="A tool to search the internet for medical information."
+)
+
+# Create an instance of PythonREPLTool
+python_repl_tool_instance = PythonREPLTool()
+
+# Wrap the PythonREPLTool in a Tool object
+python_repl_tool = tools(
+    name=python_repl_tool_instance.name,
+    func=python_repl_tool_instance.execute,
+    description=python_repl_tool_instance.description
+)
+
+# Define the Master Agent
 master_agent = Agent(
     role="Master Agent",
-    goal="Assign tasks to other agents and retrieve information for the user.",
-    backstory="You are the central orchestrator of the MediMind system, ensuring smooth coordination between agents.",
-    llm=GeminiLLM(model_name="gemini-1.5-flash-latest"),  # Use Gemini as the LLM
+    goal="Coordinate and assign tasks to other agents based on user requests.",
+    backstory="You are the central controller of the hospital crew. Your job is to delegate tasks to the appropriate agents and ensure smooth communication between them.",
     verbose=True,
     allow_delegation=True
 )
 
-# Diagnostics Agent
-diagnostics_agent = Agent(
-    role="Diagnostics Agent",
-    goal="Provide preliminary diagnoses based on medical PDFs.",
-    backstory="You are an AI trained to extract medical insights from PDFs using Retrieval-Augmented Generation (RAG).",
-    tools=[CSVReaderTool()],  # Use the CSV Reader tool
-    llm=GeminiLLM(model_name="gemini-1.5-flash-latest"),  # Use Gemini as the LLM
+# Define the Diagnostic Agent
+diagnostic_agent = Agent(
+    role="Diagnostic Agent",
+    goal="Provide accurate diagnosis for patients based on their test results.",
+    backstory="You are an AI-powered diagnostic assistant. You analyze patient test results in PDF format, use a RAG framework to retrieve information from reliable medical sources, and provide a diagnosis.",
+    tools=[rag_framework_tool],  # Use the custom tool here
     verbose=True
 )
 
-# Search Agent
+# Define the Search Agent
 search_agent = Agent(
     role="Search Agent",
-    goal="Retrieve additional medical information from trusted online sources.",
-    backstory="You are an AI specialized in searching the internet for reliable medical data.",
-    tools=[CSVReaderTool()],  # Use the CSV Reader tool
-    llm=GeminiLLM(model_name="gemini-1.5-flash-latest"),  # Use Gemini as the LLM
+    goal="Provide information about medicines, drugs, diseases, and where to buy medicines at the best prices.",
+    backstory="You are an AI-powered search assistant. You use web scraping and internet search tools to retrieve reliable medical information and provide the top 3 websites to buy medicines.",
+    tools=[web_scraping_tool, internet_search_tool],  # Use the custom tools here
     verbose=True
 )
 
-# Hospital Management Agent
+# Define the Hospital Management Agent
 hospital_management_agent = Agent(
     role="Hospital Management Agent",
-    goal="Manage patient records and hospital data, and visualize insights.",
-    backstory="You are an AI specialized in processing and visualizing hospital data.",
-    tools=[PythonREPLTool(), VisualiserTool()],  # Add Python REPL tool and Visualiser tool for data processing and visualization
-    llm=GeminiLLM(model_name="gemini-1.5-flash-latest"),  # Use Gemini as the LLM
+    goal="Manage patient records and hospital data, and visualize them using Python REPL.",
+    backstory="You are an AI-powered hospital management assistant. You handle patient records, hospital data, and provide visualizations for better decision-making.",
+    tools=[repl_tool],  # Use the custom tool here
     verbose=True
 )
 
-# Task 1: Diagnose Symptoms
-diagnose_task = Task(
-    description="Analyze the user's symptoms and provide a preliminary diagnosis using medical PDFs. Medical PDFs are: {pdf_path}",
-    agent=diagnostics_agent,
-    expected_output="A preliminary diagnosis based on the provided PDFs",
+# Define Tasks for Each Agent
+diagnostic_task = Task(
+    description="Analyze the patient's test results in PDF format and provide a diagnosis using the RAG framework.",
+    agent=diagnostic_agent,
+    expected_output="A detailed diagnosis report for the patient based on their test results."
 )
 
-# Task 2: Search for Additional Information
 search_task = Task(
-    description="Search trusted online sources for additional medical information.",
+    description="Retrieve information about a medicine, drug, or disease, and provide the top 3 websites to buy the medicine at the best price.",
     agent=search_agent,
-    expected_output="Additional medical information from trusted online sources.",
-    context=[diagnose_task]  # Depends on the Diagnostics Agent
+    expected_output="A summary of the requested information and a list of the top 3 websites to buy the medicine."
 )
 
-# Task 3: Manage Hospital Data
-manage_hospital_data_task = Task(
-    description="Manage patient records and hospital data, and generate visualizations. Path of the CSV is as follows: {csv_path}. Write a code to answer the user's question by writing Python code using the pandas library and the column names. User's question is as follows: {user_query}.",
+hospital_management_task = Task(
+    description="Manage patient records and hospital data, and visualize the data using Python REPL.",
     agent=hospital_management_agent,
-    expected_output="Insights and visualizations from hospital operations data.",
-    tools=[PythonREPLTool(), VisualiserTool()]  # Use Python REPL tool and Visualiser tool for this task
+    expected_output="Visualized patient records and hospital data for better decision-making."
 )
 
 # Define the Crew
-crew = Crew(
-    agents=[master_agent, diagnostics_agent, search_agent, hospital_management_agent],
-    tasks=[diagnose_task, search_task, manage_hospital_data_task],
-    verbose=True  # Enable detailed logging
+hospital_crew = Crew(
+    agents=[master_agent, diagnostic_agent, search_agent, hospital_management_agent],
+    tasks=[diagnostic_task, search_task, hospital_management_task],
+    verbose=True
 )
 
-# Example usage
+# Execute the Crew
 if __name__ == "__main__":
-    user_query = "What is the average age of patients in the dataset?"
-    pdf_path = r"C:\Users\Ananya\Desktop\Hackathon_Project\Data\Sample_Patient_Report.pdf"  # Use raw string for file path
-    csv_path = r"C:\Users\Ananya\Desktop\Hackathon_Project\Data\hospital_records_2021_2024_with_bills.csv"  # Use raw string for file path
+    # Example input from the user
+    user_request = "I need a diagnosis for a patient with the following test results: [insert PDF link]."
 
-    # Run the workflow
-    result = crew.kickoff(inputs={"user_query": user_query, "pdf_path": pdf_path, "csv_path": csv_path})
-    print(f"Final Result:\n{result}")
+    # Assign the task to the Master Agent
+    result = hospital_crew.kickoff(inputs={"user_request": user_request})
+    print(result)
